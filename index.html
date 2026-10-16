@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Withdraw Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d12;--panel:#12151d;--panel2:#181c26;--line:#252a37;
+  --text:#e8ebf2;--muted:#8a92a6;--accent:#7cf3c4;--accent2:#7aa2ff;
+  --warn:#ffcc66;--bad:#ff6b81;--good:#7cf3c4;--info:#7aa2ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;
+  background-image:radial-gradient(circle at 15% -10%,rgba(124,243,196,.12),transparent 40%),radial-gradient(circle at 100% 0,rgba(122,162,255,.12),transparent 40%);min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+h1{margin:0;font-size:clamp(26px,4vw,38px);letter-spacing:-.02em}
+h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin-top:4px;font-size:14px}
+.mono{font-family:'JetBrains Mono',monospace}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:10px;cursor:pointer;font:inherit;font-size:14px;transition:.15s;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0d12;border:0;font-weight:700}
+.btn.danger:hover{border-color:var(--bad);color:var(--bad)}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:8px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.auto{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px;border-color:rgba(124,243,196,.35)}
+.auto ol{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.7;flex:1;min-width:260px}
+.auto ol b{color:var(--text)}
+.bm{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0d12;font-weight:700;padding:12px 18px;border-radius:12px;text-decoration:none;cursor:grab;white-space:nowrap;box-shadow:0 0 0 4px rgba(124,243,196,.12)}
+.switch{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.switch input{width:auto;accent-color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+.stat .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.stat .val{font-size:24px;font-weight:700;margin-top:6px}
+.stat .small{color:var(--muted);font-size:12px;margin-top:2px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+.toolbar input{flex:1;min-width:180px}.toolbar select{width:auto}
+.tablebox{overflow-x:auto;border-radius:16px;border:1px solid var(--line);background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:820px}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--panel)}
+th:hover{color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.02)}
+tr.new td{animation:flash 2s}
+@keyframes flash{from{background:rgba(124,243,196,.18)}to{background:transparent}}
+td.amt{font-family:'JetBrains Mono',monospace;font-weight:600}
+.addr{max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.badge{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-block}
+.b-Pending{background:rgba(255,204,102,.12);color:var(--warn)}
+.b-Diproses{background:rgba(122,162,255,.12);color:var(--info)}
+.b-Sukses{background:rgba(124,243,196,.12);color:var(--good)}
+.b-Ditolak{background:rgba(255,107,129,.12);color:var(--bad)}
+.empty{text-align:center;color:var(--muted);padding:40px}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:0;width:min(560px,94vw)}
+dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.dlg{padding:22px}
+.dlg h2{margin:0 0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.hint{color:var(--muted);font-size:12px;margin-top:6px;line-height:1.5}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(90px);background:var(--panel2);border:1px solid var(--accent);padding:10px 18px;border-radius:12px;transition:.3s;z-index:99;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.sec{display:flex;justify-content:space-between;align-items:center;margin:4px 0 10px}
+.sec h2{margin:0;font-size:13px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+.saldoGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+.sc .big{font-size:28px;font-weight:700;font-family:'JetBrains Mono',monospace;margin:6px 0 10px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.delta{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);padding:3px 0}
+.delta b{font-family:'JetBrains Mono',monospace;color:var(--text)}
+.delta b.up{color:var(--good)}.delta b.down{color:var(--bad)}
+.spark{width:100%;height:40px;margin-top:10px;display:block}
+details summary{cursor:pointer;color:var(--muted);font-size:12px;margin-top:8px}
+.hist{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted);max-height:160px;overflow:auto;margin:6px 0}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:5px;width:max-content;max-width:100%;margin-bottom:18px}
+.tab{background:none;border:0;color:var(--muted);font:inherit;font-weight:600;padding:9px 18px;border-radius:10px;cursor:pointer}
+.tab.on{background:var(--panel2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+.clock{text-align:right}
+.clock .t{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600}
+.clock .d{color:var(--muted);font-size:12px}
+.seg{display:flex;gap:4px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{background:none;border:0;color:var(--muted);font:inherit;font-size:13px;padding:6px 12px;border-radius:7px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#0b0d12;font-weight:700}
+.chartbox{padding:14px 10px 6px}
+.chartbox svg{display:block;max-width:100%}
+#rStats .val{font-size:20px}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);padding:0 8px 6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+td.up{color:var(--good)}td.down{color:var(--bad)}
+tr.nowrow td{background:rgba(124,243,196,.06)}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Withdraw <span>Tracker</span></h1>
+      <div class="sub">Catatan withdraw &amp; saldo · data tersimpan di browser ini</div>
+    </div>
+    <div class="clock"><div class="t" id="clkT">--:--:--</div><div class="d" id="clkD"></div></div>
+    <div class="actions">
+      <button class="btn primary" onclick="grabClipboard(true)">⚡ Ambil data</button>
+      <button class="btn" onclick="openPaste()">📋 Tempel manual</button>
+      <button class="btn" onclick="exportCSV()">⬇ CSV</button>
+      <button class="btn" onclick="exportJSON()">⬇ Backup</button>
+      <button class="btn" onclick="document.getElementById('imp').click()">⬆ Restore</button>
+      <input type="file" id="imp" accept=".json" hidden onchange="importJSON(event)">
+      <button class="btn" onclick="openForm()">+ Tambah</button>
+    </div>
+  </header>
+
+  <div class="card auto">
+    <a class="bm" id="bm" href="#" onclick="event.preventDefault();toast('Seret tombol ini ke bookmark bar, jangan diklik di sini')">⚡ Grab Withdraw</a>
+    <ol>
+      <li><b>Sekali saja:</b> seret tombol hijau ke bookmark bar browser (Ctrl+Shift+B untuk memunculkannya).</li>
+      <li>Buka <b>motionv2.com/withdraw-request</b> (sudah login), lalu klik bookmark <b>Grab Withdraw</b>. Daftar withdraw dan nominal Rp di halaman (mis. saldo) ikut terambil.</li>
+      <li>Kembali ke tab ini. Data masuk otomatis. Data lama tidak dobel, statusnya ikut diperbarui.</li>
+    </ol>
+    <label class="switch"><input type="checkbox" id="autoOn" checked onchange="saveAuto()"> Auto-impor saat kembali ke tab</label>
+  </div>
+
+  <div class="tabs"><button class="tab" data-tab="wd" onclick="switchTab('wd')">Withdraw</button><button class="tab" data-tab="saldo" onclick="switchTab('saldo')">Saldo per Jam</button></div>
+
+  <section id="tab-saldo" hidden>
+    <div class="toolbar">
+      <select id="sLabel" onchange="renderRekap()" title="Pilih nominal"></select>
+      <div class="seg" id="seg">
+        <button data-p="jam" onclick="setPeriod('jam')">Per Jam</button><button data-p="hari" onclick="setPeriod('hari')">Per Hari</button><button data-p="minggu" onclick="setPeriod('minggu')">Per Minggu</button><button data-p="bulan" onclick="setPeriod('bulan')">Per Bulan</button>
+      </div>
+      <input type="date" id="sDay" style="width:auto" onchange="renderRekap()" title="Tanggal untuk tampilan per jam">
+      <span style="flex:1"></span>
+      <button class="btn sm" onclick="exportRekap()">⬇ CSV rekap</button>
+      <button class="btn sm" onclick="addSaldo()">+ Catat manual</button>
+    </div>
+    <div class="stats" id="rStats"></div>
+    <div class="card chartbox"><div class="legend"><span><i style="background:var(--good)"></i>Masuk</span><span><i style="background:var(--bad)"></i>Keluar</span><span><i style="background:var(--accent2)"></i>Saldo akhir</span></div><div id="rChart"></div></div>
+    <div class="tablebox" style="margin-top:12px">
+      <table><thead><tr><th>Periode</th><th>Saldo awal</th><th>Saldo akhir</th><th>Masuk</th><th>Keluar</th><th>Bersih</th><th>Cek</th></tr></thead><tbody id="rTb"></tbody></table>
+    </div>
+    <div class="sec" style="margin-top:22px"><h2>Semua nominal</h2></div>
+    <div class="saldoGrid" id="saldoGrid"></div>
+  </section>
+
+  <section id="tab-wd">
+  <div class="stats">
+    <div class="card stat"><div class="label">Total Request</div><div class="val" id="sCount">0</div><div class="small" id="sToday">0 hari ini</div></div>
+    <div class="card stat"><div class="label">Total Nominal</div><div class="val mono" id="sTotal">0</div><div class="small">semua status</div></div>
+    <div class="card stat"><div class="label">Sukses</div><div class="val mono" style="color:var(--good)" id="sOk">0</div><div class="small" id="sOkN">0 transaksi</div></div>
+    <div class="card stat"><div class="label">Pending / Diproses</div><div class="val mono" style="color:var(--warn)" id="sPend">0</div><div class="small" id="sPendN">0 transaksi</div></div>
+    <div class="card stat"><div class="label">Ditolak</div><div class="val mono" style="color:var(--bad)" id="sBad">0</div><div class="small" id="sBadN">0 transaksi</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input id="q" placeholder="🔍 Cari ID, user, wallet, catatan…" oninput="render()">
+    <select id="fStatus" onchange="render()"><option value="">Semua status</option><option>Pending</option><option>Diproses</option><option>Sukses</option><option>Ditolak</option></select>
+    <input type="date" id="fFrom" style="width:auto" onchange="render()" title="Dari tanggal">
+    <input type="date" id="fTo" style="width:auto" onchange="render()" title="Sampai tanggal">
+  </div>
+
+  <div class="tablebox">
+    <table>
+      <thead><tr>
+        <th data-k="tanggal">Tanggal</th><th data-k="idTx">ID</th><th data-k="user">User</th>
+        <th data-k="jumlah">Jumlah</th><th data-k="metode">Metode</th><th data-k="tujuan">Tujuan</th>
+        <th data-k="status">Status</th><th data-k="catatan">Catatan</th><th></th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div class="hint" id="info"></div>
+  </section>
+</div>
+
+<dialog id="dForm"><form class="dlg" onsubmit="save(event)">
+  <h2 id="fTitle">Tambah Withdraw</h2>
+  <div class="grid">
+    <div><label>Tanggal & jam</label><input type="datetime-local" id="tanggal" required></div>
+    <div><label>ID Transaksi</label><input id="idTx" placeholder="WD-00123"></div>
+    <div><label>User / Username</label><input id="user" placeholder="username"></div>
+    <div><label>Jumlah</label><input type="number" step="any" id="jumlah" required placeholder="0"></div>
+    <div><label>Metode / Network</label><input id="metode" list="mList" placeholder="USDT TRC20, Bank, DANA…">
+      <datalist id="mList"><option>USDT TRC20</option><option>USDT BEP20</option><option>Bank Transfer</option><option>DANA</option><option>OVO</option><option>GoPay</option></datalist></div>
+    <div><label>Status</label><select id="status"><option>Pending</option><option>Diproses</option><option>Sukses</option><option>Ditolak</option></select></div>
+    <div class="full"><label>Tujuan (alamat wallet / no. rekening)</label><input id="tujuan" class="mono"></div>
+    <div class="full"><label>Catatan</label><textarea id="catatan" rows="2"></textarea></div>
+  </div>
+  <div class="foot"><button type="button" class="btn" onclick="dForm.close()">Batal</button><button class="btn primary">Simpan</button></div>
+</form></dialog>
+
+<dialog id="dPaste"><div class="dlg">
+  <h2>Tempel data</h2>
+  <textarea id="pasteBox" rows="8" class="mono" placeholder="Tempel di sini (Ctrl+V)"></textarea>
+  <div class="hint">Bisa hasil dari bookmark <b>Grab Withdraw</b>, atau baris tabel yang kamu copy sendiri. Kalau baris pertama berisi judul kolom (Date, Amount, Status, …), kolom akan dicocokkan otomatis.</div>
+  <div class="foot"><button class="btn" onclick="dPaste.close()">Batal</button><button class="btn primary" onclick="importAll($('pasteBox').value);dPaste.close()">Import</button></div>
+</div></dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== Bookmarklet: berjalan di halaman motionv2.com ===== */
+function wdGrab(){
+  var clean=function(s){return (s||'').replace(/\s+/g,' ').trim()};
+  var rows=[],rowEls=[];
+  var tables=[].slice.call(document.querySelectorAll('table')).filter(function(t){return t.rows.length>1}).sort(function(a,b){return b.rows.length-a.rows.length});
+  if(tables.length){
+    rowEls=[tables[0]];
+    rows=[].slice.call(tables[0].rows).map(function(r){return [].slice.call(r.cells).map(function(c){return clean(c.innerText)})});
+  }else{
+    var rr=[].slice.call(document.querySelectorAll('[role=row]'));
+    if(rr.length>1){
+      rowEls=rr;
+      rows=rr.map(function(r){return [].slice.call(r.children).map(function(c){return clean(c.innerText)})});
+    }else{
+      var best=null,bestN=0;
+      [].slice.call(document.querySelectorAll('body *')).forEach(function(el){
+        if(el.children.length<2)return;
+        var cnt={};
+        [].slice.call(el.children).forEach(function(ch){
+          var t=ch.innerText||'';
+          if(!/\d/.test(t)||t.indexOf('\n')<0)return;
+          var k=ch.tagName+'.'+ch.className;cnt[k]=(cnt[k]||0)+1;
+        });
+        for(var k in cnt){if(cnt[k]>bestN){bestN=cnt[k];best={el:el,k:k}}}
+      });
+      if(best&&bestN>=3){
+        rowEls=[].slice.call(best.el.children).filter(function(ch){return ch.tagName+'.'+ch.className===best.k});
+        rows=rowEls.map(function(ch){return ch.innerText.split('\n').map(clean).filter(Boolean)});
+      }
+    }
+  }
+  rows=rows.filter(function(r){return r.some(Boolean)});
+  var saldo=[],seen={};
+  [].slice.call(document.querySelectorAll('body *')).forEach(function(el){
+    if(el.children.length||saldo.length>=15)return;
+    var t=clean(el.textContent);
+    if(!/^(Rp|IDR)\.?\s?-?[\d.,]+$/i.test(t))return;
+    if(el.closest('table,[role=row]'))return;
+    for(var i=0;i<rowEls.length;i++){if(rowEls[i].contains(el))return}
+    var lab='',p=el;
+    for(var d=0;d<3&&!lab&&p.parentElement;d++){p=p.parentElement;
+      var ls=(p.innerText||'').split('\n').map(clean).filter(function(x){return x&&x!==t&&!/^(Rp|IDR)/i.test(x)&&x.length<40});
+      if(ls.length)lab=ls[0]}
+    lab=lab||'Nominal';var k=lab,n=2;while(seen[k]){k=lab+' '+(n++)}seen[k]=1;
+    saldo.push([k,t]);
+  });
+  if(!rows.length&&!saldo.length){alert('Grab Withdraw: data tidak ditemukan di halaman ini. Pastikan halamannya sudah tampil penuh.');return}
+  var txt='#WDTRACKER\n'+rows.map(function(r){return r.join('\t')}).join('\n')+(saldo.length?'\n#SALDO\n'+saldo.map(function(r){return r.join('\t')}).join('\n'):'');
+  var done=function(){alert('Grab Withdraw: '+rows.length+' baris withdraw + '+saldo.length+' nominal Rp disalin.\nKembali ke tab Withdraw Tracker, data akan masuk otomatis.')};
+  var fb=function(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();done()};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fb)}else{fb()}
+}
+document.getElementById('bm').href='javascript:'+encodeURIComponent('('+wdGrab.toString()+')()');
+
+/* ===== Tracker ===== */
+const KEY='withdraw_tracker_v1';
+let data=[],editId=null,sortK='tanggal',sortDir=-1,newIds=new Set();
+try{data=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){data=[]}
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){toast('Gagal menyimpan')}};
+const $=id=>document.getElementById(id);
+const fmt=n=>Number(n||0).toLocaleString('id-ID',{maximumFractionDigits:8});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const nowLocal=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)};
+const FIELDS=['tanggal','idTx','user','jumlah','metode','tujuan','status','catatan'];
+const STAT=['Pending','Diproses','Sukses','Ditolak'];
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600)}
+
+function openForm(id){
+  editId=id||null;$('fTitle').textContent=id?'Edit Withdraw':'Tambah Withdraw';
+  const r=data.find(x=>x.id===id)||{tanggal:nowLocal(),status:'Pending'};
+  FIELDS.forEach(f=>$(f).value=r[f]??'');$('dForm').showModal();
+}
+function save(e){
+  e.preventDefault();const r={};FIELDS.forEach(f=>r[f]=$(f).value.trim());r.jumlah=parseFloat(r.jumlah)||0;
+  if(editId){Object.assign(data.find(x=>x.id===editId),r);toast('Data diperbarui')}
+  else{data.push({id:uid(),...r});toast('Data ditambahkan')}
+  persist();$('dForm').close();render();
+}
+function del(id){if(confirm('Hapus data ini?')){data=data.filter(x=>x.id!==id);persist();render();toast('Dihapus')}}
+function setStatus(id,s){data.find(x=>x.id===id).status=s;persist();render()}
+
+/* ===== Parser pintar ===== */
+const LABELS=[
+  ['status',/^(status|state|keadaan)$/i],
+  ['tanggal',/tanggal|date|time|waktu|created|jam|tgl/i],
+  ['jumlah',/jumlah|amount|nominal|total|nilai|qty|withdraw amount|actual/i],
+  ['tujuan',/tujuan|address|alamat|wallet|rekening|account|no\.? ?rek|card/i],
+  ['metode',/metode|method|network|bank|coin|channel|type|tipe|jaringan|currency/i],
+  ['skip',/^(no\.?|#|aksi|action|opsi)$/i],
+  ['idTx',/^id$|order|trx|transaksi|ref|invoice|serial|nomor/i],
+  ['user',/user|nama|name|akun|member|email|phone|hp|uid/i],
+  ['catatan',/catatan|note|remark|keterangan|ket|memo|fee|biaya/i],
+];
+const labelField=s=>{s=(s||'').trim().replace(/[:：]$/,'');if(!s||s.length>30)return null;for(const[f,re]of LABELS)if(re.test(s))return f;return null};
+function normStatus(s){s=(s||'').toLowerCase();
+  if(/success|sukses|berhasil|done|complete|paid|approv|selesai|lunas/.test(s))return'Sukses';
+  if(/reject|tolak|fail|gagal|cancel|batal|refund/.test(s))return'Ditolak';
+  if(/process|proses|review|audit|verif/.test(s))return'Diproses';
+  if(/pending|wait|tunggu|menunggu|queue/.test(s))return'Pending';return null}
+function normDate(s){
+  if(!s)return'';let m;
+  if(m=s.match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(?:[ T,]+(\d{1,2}):(\d{2}))?/))
+    return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}T${(m[4]||'00').padStart(2,'0')}:${m[5]||'00'}`;
+  if(m=s.match(/(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})(?:[ T,]+(\d{1,2}):(\d{2}))?/))
+    return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}T${(m[4]||'00').padStart(2,'0')}:${m[5]||'00'}`;
+  const d=new Date(s);if(!isNaN(d)){d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+  return s}
+function parseAmount(s){
+  let t=String(s||'').replace(/[^\d.,-]/g,'');if(!t)return NaN;
+  const lc=t.lastIndexOf(','),ld=t.lastIndexOf('.');
+  if(lc>-1&&ld>-1){t=lc>ld?t.replace(/\./g,'').replace(',','.'):t.replace(/,/g,'')}
+  else if(lc>-1){t=/,\d{3}$/.test(t)&&!/,\d{1,2}$/.test(t)&&(t.match(/,/g).length>1||t.length>5)?t.replace(/,/g,''):t.replace(',','.')}
+  else if(ld>-1&&(t.match(/\./g).length>1||/^[1-9]\d{0,2}\.\d{3}$/.test(t))){t=t.replace(/\./g,'')}
+  return parseFloat(t)}
+const isDate=s=>/\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4}/.test(s);
+const isAddr=s=>/^(T[1-9A-HJ-NP-Za-km-z]{25,}|0x[0-9a-fA-F]{20,}|bc1[0-9a-z]{20,})$/.test(s)||/^\d{8,20}$/.test(s.replace(/[\s-]/g,''))&&!isDate(s);
+const isMethod=s=>/usdt|trc|bep|erc|bank|bca|bri|bni|mandiri|cimb|dana|ovo|gopay|shopee|linkaja|trx|bnb|eth|btc/i.test(s)&&s.length<40;
+const isAmount=s=>/^[^\d]{0,6}-?[\d.,]+\s*[A-Za-z$Rp]{0,6}$/.test(s.trim())&&/\d/.test(s);
+const isId=s=>/^[#A-Za-z_-]*\d{5,}[A-Za-z0-9_-]*$/.test(s.trim());
+
+function rowFromCells(cells,map){
+  const r={tanggal:'',idTx:'',user:'',jumlah:NaN,metode:'',tujuan:'',status:null,catatan:''};
+  const extra=[];
+  const put=(f,v)=>{v=(v||'').trim();if(!v||f==='skip')return;
+    if(f==='metode'){r.metode=r.metode?(r.metode.includes(v)?r.metode:r.metode+' '+v):v;return}
+    if(f==='jumlah'){const a=parseAmount(v);if(!isNaN(a)&&isNaN(r.jumlah)){r.jumlah=a;const cur=v.match(/[A-Za-z]{3,5}$/);if(cur&&!r.metode)r.metode=cur[0]}else extra.push(v)}
+    else if(f==='status'){r.status=normStatus(v)||r.status;if(!normStatus(v))extra.push(v)}
+    else if(f==='tanggal'){if(!r.tanggal)r.tanggal=normDate(v);else extra.push(v)}
+    else if(f==='catatan'){extra.push(v)}
+    else if(!r[f])r[f]=v;else extra.push(v)};
+  if(map){cells.forEach((c,i)=>map[i]?put(map[i],c):c&&extra.push(c))}
+  else{
+    for(let i=0;i<cells.length;i++){
+      let c=cells[i]||'';if(!c)continue;
+      let m=c.match(/^([^:：]{1,30})[:：]\s*(.+)$/);
+      if(m&&labelField(m[1])){put(labelField(m[1]),m[2]);continue}
+      const lf=labelField(c);
+      if(lf&&i+1<cells.length&&!labelField(cells[i+1])){put(lf,cells[i+1]);i++;continue}
+      if(!r.status&&normStatus(c)&&c.length<25){r.status=normStatus(c);continue}
+      if(!r.tanggal&&isDate(c)){r.tanggal=normDate(c);continue}
+      if(!r.tujuan&&isAddr(c)){r.tujuan=c;continue}
+      if(!r.idTx&&isId(c)){r.idTx=c.replace(/^#/,'');continue}
+      if(isNaN(r.jumlah)&&isAmount(c)){put('jumlah',c);continue}
+      if(!r.metode&&isMethod(c)){r.metode=c;continue}
+      extra.push(c);
+    }
+  }
+  r.catatan=extra.join(' · ');r.status=r.status||'Pending';r.jumlah=isNaN(r.jumlah)?0:r.jumlah;
+  if(!r.tanggal)r.tanggal=nowLocal();
+  return r;
+}
+
+function importText(text,silent){
+  text=(text||'').replace(/^#WDTRACKER\s*\n/,'').trim();
+  if(!text){if(!silent)toast('Tidak ada data');return [0,0]}
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  const split=l=>l.includes('\t')?l.split('\t'):l.split(/\s*\|\s*|,(?=\S)/);
+  let rows=lines.map(split).map(c=>c.map(x=>x.trim()));
+  let map=null;
+  const hdr=rows[0].map(labelField);
+  if(hdr.filter(Boolean).length>=2&&!rows[0].some(c=>/\d{3,}/.test(c))){map=hdr;rows=rows.slice(1)}
+  let added=0,updated=0;newIds=new Set();
+  rows.forEach(cells=>{
+    const r=rowFromCells(cells,map);
+    if(!r.idTx&&!r.jumlah&&!r.tujuan)return;
+    const key=x=>x.idTx?'id:'+x.idTx:'k:'+(x.tanggal||'').slice(0,16)+'|'+x.jumlah+'|'+x.tujuan;
+    const ex=data.find(x=>key(x)===key(r));
+    if(ex){if(ex.status!==r.status){ex.status=r.status;updated++;newIds.add(ex.id)}}
+    else{const id=uid();data.push({id,...r});newIds.add(id);added++}
+  });
+  persist();render();
+  if(!silent)toast(`✅ ${added} data baru · ${updated} status diperbarui`);
+  return [added,updated];
+}
+
+/* ===== Saldo & uang masuk ===== */
+const SKEY=KEY+'_saldo';
+let saldo=[],saldoCheck={};
+try{saldo=JSON.parse(localStorage.getItem(SKEY))||[]}catch(e){}
+try{saldoCheck=JSON.parse(localStorage.getItem(SKEY+'_chk'))||{}}catch(e){}
+const persistSaldo=()=>{try{localStorage.setItem(SKEY,JSON.stringify(saldo));localStorage.setItem(SKEY+'_chk',JSON.stringify(saldoCheck))}catch(e){}};
+const rp=n=>(n<0?'-':'')+'Rp '+Math.abs(Math.round(n)).toLocaleString('id-ID');
+const sign=n=>n>0?'+'+rp(n):rp(n);
+const cls=n=>n>0?'up':n<0?'down':'';
+const fdt=t=>new Date(t).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+function addSnap(label,val,t){t=t||Date.now();saldoCheck[label]=t;
+  const h=saldo.filter(s=>s.label===label);const last=h[h.length-1];
+  if(last&&last.val===val&&t-last.t<10*60000)return false;saldo.push({t,label,val});return !last||last.val!==val}
+function importSaldo(text){let n=0,c=0;
+  text.split(/\r?\n/).forEach(l=>{const [lab,v]=l.split('\t');const val=parseAmount(v);if(!lab||!lab.trim()||isNaN(val))return;n++;if(addSnap(lab.trim(),val))c++});
+  persistSaldo();renderSaldo();return [n,c]}
+function addSaldo(){const lab=prompt('Nama nominal (mis. Saldo, Total Masuk):','Saldo');if(!lab)return;
+  const val=parseAmount(prompt('Nilai saat ini (Rp):')||'');if(isNaN(val)){toast('Nilai tidak valid');return}
+  addSnap(lab.trim(),val);persistSaldo();renderSaldo();toast('Tercatat')}
+function delSaldoLabel(lab){if(confirm('Hapus semua riwayat "'+lab+'"?')){saldo=saldo.filter(s=>s.label!==lab);delete saldoCheck[lab];persistSaldo();renderSaldo()}}
+function spark(h){if(h.length<2)return'';const v=h.map(x=>x.val),mn=Math.min(...v),mx=Math.max(...v),W=240,H=40;
+  const pts=v.map((y,i)=>`${(i/(v.length-1)*W).toFixed(1)},${(mx===mn?H/2:H-4-(y-mn)/(mx-mn)*(H-8)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`}
+function renderSaldo(){
+  if(document.getElementById('rTb')&&!$('tab-saldo').hidden)setTimeout(renderRekap,0);
+  const labels=[...new Set(saldo.map(s=>s.label))];
+  const t0=new Date();t0.setHours(0,0,0,0);const today=t0.getTime();
+  $('saldoGrid').innerHTML=labels.length?labels.map(lab=>{
+    const h=saldo.filter(s=>s.label===lab).sort((a,b)=>a.t-b.t);
+    const cur=h[h.length-1],prev=h[h.length-2];
+    let masuk=0,keluar=0;
+    for(let i=1;i<h.length;i++)if(h[i].t>=today){const d=h[i].val-h[i-1].val;if(d>0)masuk+=d;else keluar-=d}
+    const before=h.filter(s=>s.t<today);const base=before.length?before[before.length-1].val:h[0].val;
+    return `<div class="card sc"><div class="stat"><div class="label">${esc(lab)} · saat ini</div></div>
+      <div class="big">${rp(cur.val)}</div>
+      <div class="delta"><span>Masuk hari ini</span><b class="${masuk?'up':''}">${masuk?'+':''}${rp(masuk)}</b></div>
+      <div class="delta"><span>Keluar hari ini</span><b class="${keluar?'down':''}">${keluar?'-':''}${rp(keluar)}</b></div>
+      <div class="delta"><span>Sejak cek sebelumnya</span><b class="${prev?cls(cur.val-prev.val):''}">${prev?sign(cur.val-prev.val):'–'}</b></div>
+      <div class="delta"><span>Terakhir dicek</span><span>${fdt(saldoCheck[lab]||cur.t)}</span></div>
+      ${spark(h)}
+      <details><summary>Riwayat (${h.length} perubahan)</summary>
+        <div class="hist">${h.slice().reverse().map((s,i,a)=>{const p=a[i+1];return `<div>${fdt(s.t)} · ${rp(s.val)}${p?` <span class="${cls(s.val-p.val)}">(${sign(s.val-p.val)})</span>`:''}</div>`}).join('')}</div>
+        <button class="btn sm danger" data-lab="${esc(lab)}" onclick="delSaldoLabel(this.dataset.lab)">Hapus riwayat</button>
+      </details></div>`}).join('')
+    :`<div class="card empty" style="grid-column:1/-1;padding:24px">Belum ada data saldo. Klik bookmark <b>⚡ Grab Withdraw</b> di halaman yang menampilkan nominal Rp, atau <b>+ Catat manual</b>.</div>`;
+}
+
+/* ===== Rekap per jam / hari / minggu / bulan ===== */
+let period='jam';try{period=localStorage.getItem(KEY+'_per')||'jam'}catch(e){}
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'],BLN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function startOf(t,p){const d=new Date(t);
+  if(p==='jam')d.setMinutes(0,0,0);else d.setHours(0,0,0,0);
+  if(p==='minggu')d.setDate(d.getDate()-((d.getDay()+6)%7));
+  if(p==='bulan')d.setDate(1);return d}
+function step(d,p,n){d=new Date(d);
+  if(p==='jam')d.setHours(d.getHours()+n);else if(p==='hari')d.setDate(d.getDate()+n);
+  else if(p==='minggu')d.setDate(d.getDate()+7*n);else d.setMonth(d.getMonth()+n);return d}
+function bucketName(d,p,short){
+  if(p==='jam')return short?pad(d.getHours()):`${HARI[d.getDay()]} ${d.getDate()} ${BLN[d.getMonth()]} · ${pad(d.getHours())}:00–${pad(d.getHours())}:59`;
+  if(p==='hari')return short?String(d.getDate()):`${HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}`;
+  if(p==='minggu'){const e=step(d,'hari',6);return short?`${d.getDate()}/${d.getMonth()+1}`:`${d.getDate()} ${BLN[d.getMonth()]} – ${e.getDate()} ${BLN[e.getMonth()]}`}
+  return short?BLN[d.getMonth()]:`${BLN[d.getMonth()]} ${d.getFullYear()}`}
+function setPeriod(p){period=p;try{localStorage.setItem(KEY+'_per',p)}catch(e){}renderRekap()}
+function histOf(lab){return saldo.filter(s=>s.label===lab).sort((a,b)=>a.t-b.t)}
+function statRange(h,s,e){
+  let masuk=0,keluar=0,cek=0;
+  for(let i=0;i<h.length;i++){if(h[i].t>=s&&h[i].t<e){cek++;if(i>0){const d=h[i].val-h[i-1].val;if(d>0)masuk+=d;else keluar-=d}}}
+  const bef=h.filter(x=>x.t<s),upto=h.filter(x=>x.t<e);
+  const akhir=upto.length?upto[upto.length-1].val:null;
+  const awal=bef.length?bef[bef.length-1].val:(cek?h.find(x=>x.t>=s).val:null);
+  return {masuk,keluar,cek,awal,akhir}}
+function buckets(){
+  const now=Date.now();let list=[];
+  if(period==='jam'){
+    const day=$('sDay').value;
+    if(!day||day===ymd(new Date())){let s=startOf(now,'jam');for(let i=0;i<24;i++){list.unshift(s);s=step(s,'jam',-1)}}
+    else{const base=new Date(day+'T00:00');for(let i=0;i<24;i++){const s=step(base,'jam',i);if(s.getTime()>now)break;list.push(s)}}
+  }else{
+    const N={hari:30,minggu:12,bulan:12}[period];let s=startOf(now,period);
+    for(let i=0;i<N;i++){list.unshift(s);s=step(s,period,-1)}
+  }
+  return list.map(s=>({s:s.getTime(),e:step(s,period,1).getTime(),d:s}));
+}
+let rekapRows=[];
+function renderRekap(){
+  if(!$('sDay').value)$('sDay').value=ymd(new Date());
+  $('sDay').style.display=period==='jam'?'':'none';
+  document.querySelectorAll('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.p===period));
+  const labels=[...new Set(saldo.map(s=>s.label))];
+  const sel=$('sLabel'),cur=sel.value;
+  sel.innerHTML=labels.length?labels.map(l=>`<option ${l===cur?'selected':''}>${esc(l)}</option>`).join(''):'<option>—</option>';
+  sel.style.display=labels.length>1?'':'none';
+  const lab=sel.value,h=histOf(lab),now=Date.now();
+  // kartu ringkasan
+  const R=p=>{const s=startOf(now,p).getTime();return statRange(h,s,now+1)};
+  const jam=R('jam'),hari=R('hari'),mg=R('minggu'),bl=R('bulan');
+  const curV=h.length?h[h.length-1].val:null;
+  const jamLalu=startOf(now,'hari').getTime();const hrs=Math.max(1,(now-jamLalu)/3600000);
+  const last=saldoCheck[lab]||(h.length?h[h.length-1].t:null);
+  const card=(l,v,sm,c)=>`<div class="card stat"><div class="label">${l}</div><div class="val mono" ${c?`style="color:var(--${c})"`:''}>${v}</div><div class="small">${sm}</div></div>`;
+  $('rStats').innerHTML=
+    card('Saldo saat ini',curV==null?'–':rp(curV),last?`dicek <span id="agoTxt" data-t="${last}">${ago(last)}</span>`:'belum ada data')+
+    card('Masuk jam ini',(jam.masuk?'+':'')+rp(jam.masuk),`${pad(new Date().getHours())}:00 – sekarang`,jam.masuk?'good':'')+
+    card('Masuk hari ini',(hari.masuk?'+':'')+rp(hari.masuk),`rata-rata ${rp(hari.masuk/hrs)}/jam`,hari.masuk?'good':'')+
+    card('Masuk minggu ini',(mg.masuk?'+':'')+rp(mg.masuk),`keluar ${rp(mg.keluar)}`,mg.masuk?'good':'')+
+    card('Masuk bulan ini',(bl.masuk?'+':'')+rp(bl.masuk),`keluar ${rp(bl.keluar)}`,bl.masuk?'good':'');
+  // tabel + grafik
+  const bs=buckets();rekapRows=bs.map(b=>({...b,...statRange(h,b.s,b.e)}));
+  const curB=startOf(now,period).getTime();
+  $('rTb').innerHTML=h.length?rekapRows.slice().reverse().map(r=>{const net=r.awal!=null&&r.akhir!=null?r.akhir-r.awal:null;
+    return `<tr class="${r.s===curB?'nowrow':''}"><td>${bucketName(r.d,period)}${r.s===curB?' <span class="badge b-Sukses">sekarang</span>':''}</td>
+    <td class="amt">${r.awal==null?'–':rp(r.awal)}</td><td class="amt">${r.akhir==null?'–':rp(r.akhir)}</td>
+    <td class="amt ${r.masuk?'up':''}">${r.masuk?'+'+rp(r.masuk):'–'}</td><td class="amt ${r.keluar?'down':''}">${r.keluar?'-'+rp(r.keluar):'–'}</td>
+    <td class="amt ${net?cls(net):''}">${net==null?'–':sign(net)}</td><td>${r.cek||'–'}</td></tr>`}).join('')
+    :`<tr><td colspan="7" class="empty">Belum ada data saldo. Klik bookmark ⚡ Grab Withdraw di halaman motionv2, atau + Catat manual.</td></tr>`;
+  $('rChart').innerHTML=h.length?chartSVG(rekapRows):'';
+}
+function chartSVG(rows){
+  const W=Math.max(320,$('rChart').clientWidth||800),H=240,L=8,Rr=8,T=12,B=26,n=rows.length,bw=(W-L-Rr)/n;
+  const maxF=Math.max(1,...rows.map(r=>Math.max(r.masuk,r.keluar)));
+  const mid=T+(H-T-B)*0.62,up=mid-T,dn=H-B-mid;
+  const ak=rows.map(r=>r.akhir).filter(v=>v!=null),mn=Math.min(...ak),mx=Math.max(...ak);
+  const ly=v=>mx===mn?T+up/2:T+4+(1-(v-mn)/(mx-mn))*(up-8);
+  let g=`<line x1="${L}" x2="${W-Rr}" y1="${mid}" y2="${mid}" stroke="var(--line)"/>`;
+  const every=Math.ceil(n/Math.max(4,Math.floor(W/56)));let pts=[];
+  rows.forEach((r,i)=>{const x=L+i*bw,w=Math.min(36,Math.max(2,bw*0.62)),cx=x+(bw-w)/2;
+    const hu=r.masuk/maxF*up*0.95,hd=r.keluar/maxF*dn*0.95;
+    const tip=`${bucketName(r.d,period)}&#10;Masuk: ${rp(r.masuk)}&#10;Keluar: ${rp(r.keluar)}${r.akhir!=null?'&#10;Saldo akhir: '+rp(r.akhir):''}`;
+    g+=`<g><title>${tip}</title><rect x="${x}" y="${T}" width="${bw}" height="${H-T-B}" fill="transparent"/>`;
+    if(hu)g+=`<rect x="${cx}" y="${mid-hu}" width="${w}" height="${hu}" rx="3" fill="var(--good)"/>`;
+    if(hd)g+=`<rect x="${cx}" y="${mid}" width="${w}" height="${hd}" rx="3" fill="var(--bad)"/>`;
+    g+=`</g>`;
+    if(r.akhir!=null)pts.push(`${(x+bw/2).toFixed(1)},${ly(r.akhir).toFixed(1)}`);
+    if(i%every===0)g+=`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono">${bucketName(r.d,period,true)}</text>`;
+  });
+  if(pts.length>1)g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}</svg>`}
+window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(()=>{if(!$('tab-saldo').hidden)renderRekap()},200)});
+function exportRekap(){
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const lines=[['periode','saldo_awal','saldo_akhir','masuk','keluar','bersih','cek'].join(','),
+    ...rekapRows.map(r=>[bucketName(r.d,period),r.awal??'',r.akhir??'',r.masuk,r.keluar,r.awal!=null&&r.akhir!=null?r.akhir-r.awal:'',r.cek].map(q).join(','))];
+  download(`saldo-per-${period}-${ymd(new Date())}.csv`,'\ufeff'+lines.join('\n'),'text/csv')}
+function ago(t){const m=Math.floor((Date.now()-t)/60000);if(m<1)return'baru saja';if(m<60)return m+' menit lalu';const h=Math.floor(m/60);if(h<24)return h+' jam '+(m%60)+' menit lalu';return Math.floor(h/24)+' hari lalu'}
+
+/* ===== Tab & jam ===== */
+function switchTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  $('tab-wd').hidden=t!=='wd';$('tab-saldo').hidden=t!=='saldo';try{localStorage.setItem(KEY+'_tab',t)}catch(e){}
+  if(t==='saldo')renderRekap()}
+let lastHour=new Date().getHours();
+function tick(){const d=new Date();
+  $('clkT').textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  $('clkD').textContent=d.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const a=document.getElementById('agoTxt');if(a)a.textContent=ago(+a.dataset.t);
+  if(d.getHours()!==lastHour){lastHour=d.getHours();if(!$('tab-saldo').hidden)renderRekap()}}
+setInterval(tick,1000);
+
+function importAll(text){
+  text=(text||'').replace(/^#WDTRACKER[ \t]*\n?/,'');
+  const parts=text.split(/(?:^|\n)#SALDO[ \t]*\n?/);
+  const msg=[];
+  if(parts[0].trim()){const [a,u]=importText(parts[0],true);msg.push(`${a} withdraw baru, ${u} status diperbarui`)}
+  if(parts[1]&&parts[1].trim()){const [n,c]=importSaldo(parts[1]);msg.push(`${n} nominal Rp dibaca (${c} berubah)`)}
+  toast(msg.length?'✅ '+msg.join(' · '):'Tidak ada data');
+}
+
+/* ===== Auto-impor dari clipboard ===== */
+let lastClip='';try{lastClip=localStorage.getItem(KEY+'_last')||''}catch(e){}
+try{$('autoOn').checked=localStorage.getItem(KEY+'_auto')!=='0'}catch(e){}
+function saveAuto(){try{localStorage.setItem(KEY+'_auto',$('autoOn').checked?'1':'0')}catch(e){}}
+async function grabClipboard(manual){
+  try{
+    const t=await navigator.clipboard.readText();
+    if(!t.startsWith('#WDTRACKER')){if(manual){openPaste();toast('Clipboard bukan dari Grab Withdraw. Tempel manual di sini.')}return}
+    if(!manual&&t===lastClip)return;
+    lastClip=t;try{localStorage.setItem(KEY+'_last',t)}catch(e){}
+    importAll(t);
+  }catch(e){if(manual){openPaste();toast('Izin clipboard ditolak. Tekan Ctrl+V di kotak ini.')}}
+}
+window.addEventListener('focus',()=>{if($('autoOn').checked)setTimeout(()=>grabClipboard(false),250)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('autoOn').checked)setTimeout(()=>grabClipboard(false),250)});
+
+/* ===== Tabel ===== */
+function filtered(){
+  const q=$('q').value.toLowerCase(),st=$('fStatus').value,fr=$('fFrom').value,to=$('fTo').value;
+  return data.filter(r=>{
+    if(st&&r.status!==st)return false;
+    const d=(r.tanggal||'').slice(0,10);
+    if(fr&&d<fr)return false;if(to&&d>to)return false;
+    if(q&&!FIELDS.some(f=>String(r[f]??'').toLowerCase().includes(q)))return false;
+    return true;
+  }).sort((a,b)=>{let x=a[sortK],y=b[sortK];if(sortK==='jumlah'){x=+x;y=+y}else{x=String(x??'');y=String(y??'')}return x>y?sortDir:x<y?-sortDir:0});
+}
+function render(){
+  const rows=filtered();
+  $('tb').innerHTML=rows.length?rows.map(r=>`<tr class="${newIds.has(r.id)?'new':''}">
+    <td class="mono">${esc((r.tanggal||'').replace('T',' '))}</td>
+    <td class="mono">${esc(r.idTx)}</td><td>${esc(r.user)}</td>
+    <td class="amt">${fmt(r.jumlah)}</td><td>${esc(r.metode)}</td>
+    <td class="mono addr" title="${esc(r.tujuan)}">${esc(r.tujuan)}</td>
+    <td><select class="badge b-${esc(r.status)}" style="width:auto;border:0;cursor:pointer" onchange="setStatus('${r.id}',this.value)">${STAT.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${esc(r.catatan)}">${esc(r.catatan)}</td>
+    <td><button class="btn sm" onclick="openForm('${r.id}')">Edit</button> <button class="btn sm danger" onclick="del('${r.id}')">✕</button></td>
+  </tr>`).join(''):`<tr><td colspan="9" class="empty">Belum ada data. Pakai bookmark <b>⚡ Grab Withdraw</b> di halaman withdraw, atau klik <b>+ Tambah</b>.</td></tr>`;
+  const sum=arr=>arr.reduce((a,r)=>a+(+r.jumlah||0),0);
+  const by=s=>rows.filter(r=>s.includes(r.status));
+  const today=new Date().toLocaleDateString('sv');
+  $('sCount').textContent=rows.length;
+  $('sToday').textContent=rows.filter(r=>(r.tanggal||'').startsWith(today)).length+' hari ini';
+  $('sTotal').textContent=fmt(sum(rows));
+  $('sOk').textContent=fmt(sum(by(['Sukses'])));$('sOkN').textContent=by(['Sukses']).length+' transaksi';
+  $('sPend').textContent=fmt(sum(by(['Pending','Diproses'])));$('sPendN').textContent=by(['Pending','Diproses']).length+' transaksi';
+  $('sBad').textContent=fmt(sum(by(['Ditolak'])));$('sBadN').textContent=by(['Ditolak']).length+' transaksi';
+  $('info').textContent=`Menampilkan ${rows.length} dari ${data.length} data · klik judul kolom untuk mengurutkan`;
+  document.querySelectorAll('th[data-k]').forEach(th=>{const k=th.dataset.k;th.textContent=th.textContent.replace(/ [▲▼]$/,'')+(k===sortK?(sortDir>0?' ▲':' ▼'):'')});
+}
+document.querySelectorAll('th[data-k]').forEach(th=>th.onclick=()=>{const k=th.dataset.k;sortDir=sortK===k?-sortDir:1;sortK=k;render()});
+
+function openPaste(){$('pasteBox').value='';$('dPaste').showModal();setTimeout(()=>$('pasteBox').focus(),50)}
+
+/* ===== Export / Backup ===== */
+function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function exportCSV(){
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[FIELDS.join(','),...filtered().map(r=>FIELDS.map(f=>q(r[f])).join(','))].join('\n');
+  download('withdraw-'+new Date().toLocaleDateString('sv')+'.csv','\ufeff'+csv,'text/csv');
+}
+function exportJSON(){download('withdraw-backup-'+new Date().toLocaleDateString('sv')+'.json',JSON.stringify(data,null,2),'application/json')}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+  rd.onload=()=>{try{const arr=JSON.parse(rd.result);if(!Array.isArray(arr))throw 0;
+    const ids=new Set(data.map(x=>x.id));arr.forEach(r=>{if(!r.id||ids.has(r.id))r.id=uid();data.push(r)});
+    persist();render();toast(arr.length+' data dipulihkan')}catch(err){toast('File tidak valid')}};
+  rd.readAsText(f);e.target.value=''}
+render();renderSaldo();tick();
+let tab0='wd';try{tab0=localStorage.getItem(KEY+'_tab')||'wd'}catch(e){}
+switchTab(tab0);
+</script>
+</body>
+</html>
