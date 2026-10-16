@@ -625,10 +625,12 @@
       });
     }
     // 2) Dibuka dari GitHub Pages / hosting lain -> panggil API lewat fetch
-    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(API_URL)) {
-      return Promise.reject(new Error('API_URL belum diisi dengan benar di index.html (harus URL Apps Script yang berakhiran /exec).'));
+    // Rapikan URL: hapus spasi, paksa https, buang ?ping=1 jika ikut tertempel
+    const url = String(API_URL).trim().replace(/^http:\/\//i, 'https://').replace(/\?.*$/, '');
+    if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(url)) {
+      return Promise.reject(new Error('API_URL belum benar di index.html. Isi sekarang: "' + API_URL + '" — harus URL Apps Script yang berakhiran /exec.'));
     }
-    return fetch(API_URL, {
+    return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // hindari preflight CORS
       body: JSON.stringify({ action: fn, args })
